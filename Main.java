@@ -1,133 +1,41 @@
-// Интерфейс для обслуживания комнат
-interface RoomService<T extends Room> {
-    void clean(T room);
-    void reserve(T room);
-    void free(T room);
-}
+import java.util.function.Predicate;
 
-// Кастомное исключение — если комната уже забронирована
-class RoomAlreadyReservedException extends RuntimeException {
-    public RoomAlreadyReservedException(String message) {
-        super(message);
-    }
-}
-
-// Абстрактный базовый класс Room
-abstract class Room {
-    protected int number;
-    protected int maxPeople;
-    protected int pricePerNight;
-    protected boolean isReserved;
-
-    public Room(int number, int maxPeople, int pricePerNight) {
-        this.number = number;
-        this.maxPeople = maxPeople;
-        this.pricePerNight = pricePerNight;
-        this.isReserved = false;
-    }
-
-    public int getNumber() {
-        return number;
-    }
-
-    public boolean isReserved() {
-        return isReserved;
-    }
-
-    public void setReserved(boolean reserved) {
-        isReserved = reserved;
-    }
-
-    @Override
-    public String toString() {
-        return getClass().getSimpleName() + " №" + number +
-                " (макс. " + maxPeople + " чел, " +
-                "цена: " + pricePerNight + ", " +
-                (isReserved ? "занята" : "свободна") + ")";
-    }
-}
-
-// --- Дочерние классы ---
-
-class EconomyRoom extends Room {
-    public EconomyRoom(int number, int pricePerNight) {
-        super(number, (int)(Math.random() * 2 + 1), pricePerNight); // 1-2 чел
-    }
-}
-
-class StandardRoom extends EconomyRoom {
-    public StandardRoom(int number, int pricePerNight) {
-        super(number, pricePerNight);
-    }
-}
-
-abstract class ProRoom extends Room {
-    public ProRoom(int number, int maxPeople, int pricePerNight) {
-        super(number, maxPeople, pricePerNight);
-    }
-}
-
-class LuxRoom extends ProRoom {
-    public LuxRoom(int number, int pricePerNight) {
-        super(number, (int)(Math.random() * 3 + 2), pricePerNight); // 2-4 чел
-    }
-}
-
-class UltraLuxRoom extends LuxRoom {
-    public UltraLuxRoom(int number, int pricePerNight) {
-        super(number, pricePerNight);
-    }
-}
-
-// --- Реализация интерфейса RoomService ---
-class RoomServiceImpl implements RoomService<Room> {
-
-    @Override
-    public void clean(Room room) {
-        System.out.println("Комната " + room.getNumber() + " убрана.");
-    }
-
-    @Override
-    public void reserve(Room room) {
-        if (room.isReserved())
-            throw new RoomAlreadyReservedException("Комната №" + room.getNumber() + " уже забронирована!");
-        room.setReserved(true);
-        System.out.println("Комната №" + room.getNumber() + " успешно забронирована!");
-    }
-
-    @Override
-    public void free(Room room) {
-        room.setReserved(false);
-        System.out.println("Комната №" + room.getNumber() + " теперь свободна.");
-    }
-}
-
-// --- Тест ---
 public class Main {
+
+    interface Printable {
+        void print();
+    }
+
     public static void main(String[] args) {
-        RoomService<Room> service = new RoomServiceImpl();
 
-        EconomyRoom economy = new EconomyRoom(101, 1500);
-        StandardRoom standard = new StandardRoom(102, 2000);
-        LuxRoom lux = new LuxRoom(201, 5000);
-        UltraLuxRoom ultra = new UltraLuxRoom(301, 10000);
+        Printable printable = () -> System.out.println("Hello, this is Printable!");
+        printable.print();
 
-        System.out.println(economy);
-        System.out.println(lux);
-        System.out.println(ultra);
+        Predicate<String> isNotNull = str -> str != null;
+        Predicate<String> isNotEmpty = str -> !str.isEmpty();
+        Predicate<String> isValidString = isNotNull.and(isNotEmpty);
 
-        // Протестируем методы
-        service.clean(lux);
-        service.reserve(lux);
-        System.out.println(lux);
+        String test1 = null;
+        String test2 = "";
+        String test3 = "Hello";
 
-        try {
-            service.reserve(lux); // Ошибка
-        } catch (RoomAlreadyReservedException e) {
-            System.out.println("❌ " + e.getMessage());
-        }
+        System.out.println("test1 valid: " + isValidString.test(test1));
+        System.out.println("test2 valid: " + isValidString.test(test2));
+        System.out.println("test3 valid: " + isValidString.test(test3));
 
-        service.free(lux);
-        System.out.println(lux);
+        Predicate<String> startsWithJorN = str -> str.startsWith("J") || str.startsWith("N");
+        Predicate<String> endsWithA = str -> str.endsWith("A");
+
+        Predicate<String> complexCheck = isValidString
+                .and(startsWithJorN)
+                .and(endsWithA);
+
+        String test4 = "JAVA";
+        String test5 = "NOVA";
+        String test6 = "HELLO";
+
+        System.out.println("test4: " + complexCheck.test(test4));
+        System.out.println("test5: " + complexCheck.test(test5));
+        System.out.println("test6: " + complexCheck.test(test6));
     }
 }
